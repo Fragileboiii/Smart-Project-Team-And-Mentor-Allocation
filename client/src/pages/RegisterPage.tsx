@@ -6,7 +6,7 @@ export default function RegisterPage() {
   const navigate = useNavigate();
   const [form, setForm] = useState({
     role: 'student', email: '', password: '', firstName: '', lastName: '',
-    rollNumber: '', department: 'CSE', semester: '5',
+    rollNumber: '', department: 'CSE', semester: '5', section: '',
     employeeId: '', designation: '', maxCapacity: '3',
   });
   const [error, setError] = useState('');
@@ -79,6 +79,10 @@ export default function RegisterPage() {
                 <div>
                   <label className="block text-xs text-slate-400 mb-1">Department</label>
                   <input className="input" placeholder="CSE" value={form.department} onChange={set('department')} required />
+                </div>
+                <div>
+                  <label className="block text-xs text-slate-400 mb-1">Section</label>
+                  <input className="input" placeholder="e.g. A, B, C" value={form.section} onChange={set('section')} />
                 </div>
               </>
             )}

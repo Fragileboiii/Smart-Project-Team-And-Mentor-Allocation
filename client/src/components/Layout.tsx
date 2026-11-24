@@ -2,7 +2,7 @@ import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import {
   LayoutDashboard, Users, BookOpen, ClipboardList, UserCircle,
-  LogOut, Brain, BarChart3, Activity, Shield, ChevronRight, Menu, X
+  LogOut, Brain, BarChart3, Activity, Shield, ChevronRight, Menu, X, Inbox, Heart, Layers, GitCompare
 } from 'lucide-react';
 import { useState } from 'react';
 import clsx from 'clsx';
@@ -11,9 +11,11 @@ interface NavItem { label: string; to: string; icon: React.ReactNode; }
 
 const studentNav: NavItem[] = [
   { label: 'Dashboard',  to: '/student',          icon: <LayoutDashboard size={18} /> },
+  { label: 'Discover',   to: '/student/discover', icon: <Heart size={18} /> },
   { label: 'My Team',    to: '/student/teams',     icon: <Users size={18} /> },
   { label: 'Mentors',    to: '/student/mentors',   icon: <BookOpen size={18} /> },
   { label: 'Requests',   to: '/student/requests',  icon: <ClipboardList size={18} /> },
+  { label: 'Invitations', to: '/student/invitations', icon: <Inbox size={18} /> },
   { label: 'Profile',    to: '/student/profile',   icon: <UserCircle size={18} /> },
 ];
 
@@ -27,6 +29,10 @@ const adminNav: NavItem[] = [
   { label: 'OS Monitor', to: '/admin/monitor',    icon: <Shield size={18} /> },
   { label: 'Banker\'s',  to: '/admin/bankers',    icon: <Brain size={18} /> },
   { label: 'Analytics',  to: '/admin/analytics',  icon: <BarChart3 size={18} /> },
+  { label: 'Allocations', to: '/admin/allocations', icon: <Users size={18} /> },
+  { label: 'Cycles',      to: '/admin/cycles',      icon: <Layers size={18} /> },
+  { label: 'Users',       to: '/admin/users',       icon: <UserCircle size={18} /> },
+  { label: 'Algo Compare', to: '/admin/algo-compare', icon: <GitCompare size={18} /> },
 ];
 
 export default function Layout({ children }: { children: React.ReactNode }) {

@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import api from '../services/api';
 
 export default function LoginPage() {
   const { login } = useAuth();
@@ -8,6 +9,14 @@ export default function LoginPage() {
   const [form, setForm] = useState({ email: '', password: '' });
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [showForgot, setShowForgot] = useState(false);
+  const [forgotEmail, setForgotEmail] = useState('');
+  const [forgotToken, setForgotToken] = useState('');
+  const [forgotNewPw, setForgotNewPw] = useState('');
+  const [forgotStep, setForgotStep] = useState<'email'|'reset'>('email');
+  const [forgotMsg, setForgotMsg] = useState('');
+  const [forgotErr, setForgotErr] = useState('');
+  const [forgotBusy, setForgotBusy] = useState(false);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -21,6 +30,25 @@ export default function LoginPage() {
     } finally {
       setLoading(false);
     }
+  }
+
+  async function sendForgot(e: React.FormEvent) {
+    e.preventDefault(); setForgotBusy(true); setForgotErr(''); setForgotMsg('');
+    try {
+      await api.post('/auth/forgot-password', { email: forgotEmail });
+      setForgotMsg('Check your email for the reset token.');
+      setForgotStep('reset');
+    } catch (err: any) { setForgotErr(err.response?.data?.error || 'Failed'); }
+    finally { setForgotBusy(false); }
+  }
+
+  async function doReset(e: React.FormEvent) {
+    e.preventDefault(); setForgotBusy(true); setForgotErr(''); setForgotMsg('');
+    try {
+      await api.post('/auth/reset-password', { email: forgotEmail, token: forgotToken, newPassword: forgotNewPw });
+      setForgotMsg('Password reset! You can now sign in.'); setShowForgot(false); setForgotStep('email');
+    } catch (err: any) { setForgotErr(err.response?.data?.error || 'Failed'); }
+    finally { setForgotBusy(false); }
   }
 
   return (
@@ -54,6 +82,29 @@ export default function LoginPage() {
         </div>
 
         {/* Quick login helpers */}
+        {showForgot && (
+          <div className="mt-4 card space-y-3">
+            <p className="text-sm font-semibold text-white">{forgotStep === 'email' ? 'Forgot Password' : 'Enter Reset Token'}</p>
+            {forgotMsg && <p className="text-xs text-emerald-400">{forgotMsg}</p>}
+            {forgotErr && <p className="text-xs text-rose-400">{forgotErr}</p>}
+            {forgotStep === 'email' ? (
+              <form onSubmit={sendForgot} className="space-y-2">
+                <input type="email" className="input text-sm" placeholder="Your email" value={forgotEmail} onChange={e => setForgotEmail(e.target.value)} required />
+                <button type="submit" disabled={forgotBusy} className="btn-primary w-full text-sm">{forgotBusy ? 'Sending...' : 'Send Reset Token'}</button>
+              </form>
+            ) : (
+              <form onSubmit={doReset} className="space-y-2">
+                <input className="input text-sm" placeholder="Reset token from email" value={forgotToken} onChange={e => setForgotToken(e.target.value)} required />
+                <input type="password" className="input text-sm" placeholder="New password (min 8 chars)" value={forgotNewPw} onChange={e => setForgotNewPw(e.target.value)} required />
+                <button type="submit" disabled={forgotBusy} className="btn-primary w-full text-sm">{forgotBusy ? 'Resetting...' : 'Reset Password'}</button>
+              </form>
+            )}
+            <button onClick={() => setShowForgot(false)} className="text-xs text-slate-500 hover:text-slate-300">Cancel</button>
+          </div>
+        )}
+        <p className="text-center text-xs text-slate-500 mt-2">
+          <button onClick={() => { setShowForgot(v => !v); setForgotStep('email'); setForgotMsg(''); setForgotErr(''); }} className="text-indigo-400 hover:text-indigo-300">Forgot password?</button>
+        </p>
         <div className="mt-4 space-y-2">
           <p className="text-xs text-slate-600 text-center">Quick demo login:</p>
           {[

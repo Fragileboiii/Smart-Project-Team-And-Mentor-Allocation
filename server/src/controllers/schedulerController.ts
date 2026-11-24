@@ -22,7 +22,7 @@ export async function getQueue(req: Request, res: Response, next: NextFunction) 
 
 export async function runSchedulerHandler(req: Request, res: Response, next: NextFunction) {
   try {
-    const algorithm = (req.body.algorithm || 'FCFS') as 'FCFS' | 'PRIORITY';
+    const algorithm = (req.body.algorithm || 'FCFS') as 'FCFS' | 'PRIORITY' | 'ROUND_ROBIN';
     const result = await runScheduler(algorithm, req.user!.id);
     await writeAuditLog(req.user!.id, 'RUN_SCHEDULER', 'scheduler', 'global', null, { algorithm, ...result }, req.ip);
     return res.json({ algorithm, ...result });

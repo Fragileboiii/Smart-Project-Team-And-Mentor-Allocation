@@ -5,6 +5,8 @@ import { v4 as uuidv4 } from 'uuid';
 import { z } from 'zod';
 import { env } from '../config/env';
 import { findUserByEmail, findUserById, createUser } from '../repositories/userRepository';
+import crypto from 'crypto';
+import { sendEmail } from '../utils/email';
 import pool from '../config/database';
 import { writeAuditLog } from '../utils/audit';
 
@@ -18,6 +20,7 @@ const registerSchema = z.object({
   rollNumber: z.string().optional(),
   department: z.string().optional(),
   semester: z.coerce.number().optional(),
+  section: z.string().optional(),
   // mentor fields
   employeeId: z.string().optional(),
   designation: z.string().optional(),
@@ -40,8 +43,8 @@ export async function register(req: Request, res: Response, next: NextFunction) 
       }
       const sid = uuidv4();
       await pool.execute(
-        'INSERT INTO students (id,user_id,roll_number,department,semester) VALUES (?,?,?,?,?)',
-        [sid, userId, body.rollNumber, body.department, body.semester]
+        'INSERT INTO students (id,user_id,roll_number,department,semester,section) VALUES (?,?,?,?,?,?)',
+        [sid, userId, body.rollNumber, body.department, body.semester, body.section || null]
       );
     } else if (body.role === 'mentor') {
       if (!body.employeeId || !body.department || !body.designation) {
@@ -95,5 +98,55 @@ export async function me(req: Request, res: Response, next: NextFunction) {
       id: user.id, email: user.email, role: user.role,
       firstName: user.first_name, lastName: user.last_name,
     });
+  } catch (e) { next(e); }
+}
+
+const forgotSchema = z.object({ email: z.string().email() });
+
+export async function forgotPassword(req: Request, res: Response, next: NextFunction) {
+  try {
+    const { email } = forgotSchema.parse(req.body);
+    const user = await findUserByEmail(email);
+    // Always return same message to avoid user enumeration
+    if (!user) return res.json({ message: 'If that email exists, a reset link has been sent' });
+
+    const token = crypto.randomBytes(32).toString('hex');
+    const hash = await bcrypt.hash(token, 10);
+    const id = (await import('uuid')).v4();
+    await pool.execute(
+      `INSERT INTO password_reset_tokens (id, user_id, token_hash, expires_at) VALUES (?, ?, ?, DATE_ADD(NOW(), INTERVAL 1 HOUR))`,
+      [id, user.id, hash]
+    );
+    await sendEmail(email, 'Password Reset - SmartAlloc', 'Your password reset token: ' + token + '\n\nThis token expires in 1 hour. Use it at the login page to reset your password.');
+    return res.json({ message: 'If that email exists, a reset link has been sent' });
+  } catch (e) { next(e); }
+}
+
+const resetSchema = z.object({
+  token: z.string().min(1),
+  email: z.string().email(),
+  newPassword: z.string().min(8),
+});
+
+export async function resetPassword(req: Request, res: Response, next: NextFunction) {
+  try {
+    const { token, email, newPassword } = resetSchema.parse(req.body);
+    const user = await findUserByEmail(email);
+    if (!user) return res.status(400).json({ error: 'Invalid token or email' });
+
+    const [rows] = await pool.execute<any[]>(
+      `SELECT * FROM password_reset_tokens WHERE user_id=? AND used=false AND expires_at > NOW() ORDER BY created_at DESC LIMIT 1`,
+      [user.id]
+    );
+    if (!rows[0]) return res.status(400).json({ error: 'Invalid or expired reset token' });
+
+    const valid = await bcrypt.compare(token, rows[0].token_hash);
+    if (!valid) return res.status(400).json({ error: 'Invalid or expired reset token' });
+
+    const newHash = await bcrypt.hash(newPassword, env.BCRYPT_ROUNDS);
+    await pool.execute(`UPDATE users SET password_hash=?, updated_at=NOW() WHERE id=?`, [newHash, user.id]);
+    await pool.execute(`UPDATE password_reset_tokens SET used=true WHERE id=?`, [rows[0].id]);
+    await writeAuditLog(user.id, 'PASSWORD_RESET', 'user', user.id, null, null, req.ip);
+    return res.json({ message: 'Password reset successfully' });
   } catch (e) { next(e); }
 }

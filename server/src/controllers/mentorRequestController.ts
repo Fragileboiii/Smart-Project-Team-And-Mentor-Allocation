@@ -5,7 +5,8 @@ import pool from '../config/database';
 import { RowDataPacket } from 'mysql2/promise';
 import { AppError } from '../middleware/errorHandler';
 import { writeAuditLog } from '../utils/audit';
-import { allocateMentor, releaseAllocation } from '../algorithms/allocationEngine';
+import { allocateMentor, releaseAllocation, reassignAllocation } from '../algorithms/allocationEngine';
+import { sendEmail } from '../utils/email';
 import { getMentorWithCapacity, getMentorSkills } from '../repositories/mentorRepository';
 import { areDomainsCompatible } from '../algorithms/matchingEngine';
 
@@ -81,7 +82,7 @@ export async function createMentorRequest(req: Request, res: Response, next: Nex
 
     // Verify requester is the team leader
     const [teamRows] = await pool.execute<RowDataPacket[]>(
-      `SELECT t.leader_id, t.project_domain, s.user_id FROM teams t JOIN students s ON s.id = t.leader_id WHERE t.id=?`,
+      `SELECT t.leader_id, t.project_domain, s.user_id, u.email AS leader_email FROM teams t JOIN students s ON s.id = t.leader_id JOIN users u ON u.id = s.user_id WHERE t.id=?`,
       [body.teamId]
     );
     if (!teamRows[0]) throw new AppError('Team not found', 404);
@@ -181,6 +182,7 @@ export async function createMentorRequest(req: Request, res: Response, next: Nex
       const allocResult = await allocateMentor(reqId, body.teamId, body.mentorId, cycleId, req.user!.id);
       if (allocResult.success) {
         await writeAuditLog(req.user!.id, 'CREATE_MENTOR_REQUEST_ALLOCATED_FCFS', 'allocation', allocResult.allocationId!, null, body, req.ip);
+        sendEmail(teamRows[0].leader_email || '', 'Mentor Allocated - SmartAlloc', 'Your team has been allocated mentor ' + mentor.first_name + ' ' + mentor.last_name + '.').catch(() => {});
         return res.status(201).json({
           requestId: reqId,
           allocationId: allocResult.allocationId,
@@ -314,5 +316,17 @@ export async function rejectMentorRequest(req: Request, res: Response, next: Nex
 
     await writeAuditLog(req.user!.id, 'MENTOR_REJECT_REQUEST', 'mentor_request', id, null, { comments }, req.ip);
     return res.json({ message: 'Request rejected. Improvement feedback delivered to the team.', comments });
+  } catch (e) { next(e); }
+}
+
+const reassignSchema = z.object({ newMentorId: z.string() });
+
+export async function reassignAllocationHandler(req: Request, res: Response, next: NextFunction) {
+  try {
+    const { newMentorId } = reassignSchema.parse(req.body);
+    const result = await reassignAllocation(req.params.id, newMentorId, req.user!.id);
+    if (!result.success) return res.status(400).json({ error: result.reason });
+    await writeAuditLog(req.user!.id, 'REASSIGN_ALLOCATION', 'allocation', req.params.id, null, { newMentorId, newAllocationId: result.newAllocationId }, req.ip);
+    return res.json({ message: 'Allocation reassigned', newAllocationId: result.newAllocationId });
   } catch (e) { next(e); }
 }

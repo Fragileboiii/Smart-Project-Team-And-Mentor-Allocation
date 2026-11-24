@@ -69,7 +69,6 @@ async function runMigrations() {
       updated_at      DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
       FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
     )`,
-
     // mentors
     `CREATE TABLE IF NOT EXISTS mentors (
       id                  VARCHAR(36) PRIMARY KEY,
@@ -85,8 +84,6 @@ async function runMigrations() {
       updated_at          DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
       FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
     )`,
-    `ALTER TABLE mentors ADD COLUMN domain VARCHAR(100)`,
-
     // skills
     `CREATE TABLE IF NOT EXISTS skills (
       id         VARCHAR(36) PRIMARY KEY,
@@ -174,9 +171,7 @@ async function runMigrations() {
       FOREIGN KEY (mentor_id) REFERENCES mentors(id) ON DELETE CASCADE,
       FOREIGN KEY (cycle_id)  REFERENCES project_cycles(id) ON DELETE CASCADE
     )`,
-    `ALTER TABLE mentor_requests ADD COLUMN rejection_comments TEXT`,
-
-    // allocations — no UNIQUE on (team,cycle,status) because MySQL can't enforce uniqueness with enum value match
+    // allocations
     `CREATE TABLE IF NOT EXISTS allocations (
       id           VARCHAR(36) PRIMARY KEY,
       team_id      VARCHAR(36) NOT NULL,
@@ -187,6 +182,7 @@ async function runMigrations() {
       allocated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
       released_at  DATETIME,
       notes        TEXT,
+      UNIQUE KEY uq_team_cycle_active (team_id, cycle_id, status),
       FOREIGN KEY (team_id)    REFERENCES teams(id)    ON DELETE RESTRICT,
       FOREIGN KEY (mentor_id)  REFERENCES mentors(id)  ON DELETE RESTRICT,
       FOREIGN KEY (cycle_id)   REFERENCES project_cycles(id) ON DELETE RESTRICT,
@@ -230,6 +226,59 @@ async function runMigrations() {
       FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE SET NULL
     )`,
 
+    // password reset tokens
+    `CREATE TABLE IF NOT EXISTS password_reset_tokens (
+      id         VARCHAR(36) PRIMARY KEY,
+      user_id    VARCHAR(36) NOT NULL,
+      token_hash VARCHAR(255) NOT NULL,
+      expires_at DATETIME NOT NULL,
+      used       BOOLEAN NOT NULL DEFAULT FALSE,
+      created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+    )`,
+    `CREATE INDEX IF NOT EXISTS idx_prt_user    ON password_reset_tokens (user_id)`,
+    `CREATE INDEX IF NOT EXISTS idx_prt_expires ON password_reset_tokens (expires_at)`,
+
+    // Students indexes
+    `CREATE INDEX IF NOT EXISTS idx_students_user_id ON students (user_id)`,
+    `CREATE INDEX IF NOT EXISTS idx_students_roll    ON students (roll_number)`,
+    // Mentors indexes
+    `CREATE INDEX IF NOT EXISTS idx_mentors_user_id  ON mentors (user_id)`,
+    `CREATE INDEX IF NOT EXISTS idx_mentors_available ON mentors (is_available)`,
+    `CREATE INDEX IF NOT EXISTS idx_mentors_domain   ON mentors (domain)`,
+    // Teams indexes
+    `CREATE INDEX IF NOT EXISTS idx_teams_cycle   ON teams (cycle_id)`,
+    `CREATE INDEX IF NOT EXISTS idx_teams_leader  ON teams (leader_id)`,
+    `CREATE INDEX IF NOT EXISTS idx_teams_status  ON teams (status)`,
+    // Team members indexes
+    `CREATE INDEX IF NOT EXISTS idx_tm_student ON team_members (student_id)`,
+    `CREATE INDEX IF NOT EXISTS idx_tm_team    ON team_members (team_id)`,
+    // Team invitations indexes
+    `CREATE INDEX IF NOT EXISTS idx_inv_invitee ON team_invitations (invitee_id)`,
+    `CREATE INDEX IF NOT EXISTS idx_inv_team    ON team_invitations (team_id)`,
+    // Mentor requests indexes
+    `CREATE INDEX IF NOT EXISTS idx_mr_mentor   ON mentor_requests (mentor_id)`,
+    `CREATE INDEX IF NOT EXISTS idx_mr_team     ON mentor_requests (team_id)`,
+    `CREATE INDEX IF NOT EXISTS idx_mr_status   ON mentor_requests (status)`,
+    `CREATE INDEX IF NOT EXISTS idx_mr_enqueue  ON mentor_requests (enqueue_time)`,
+    `CREATE INDEX IF NOT EXISTS idx_mr_priority ON mentor_requests (priority_score DESC)`,
+    // Allocations indexes
+    `CREATE INDEX IF NOT EXISTS idx_alloc_mentor ON allocations (mentor_id)`,
+    `CREATE INDEX IF NOT EXISTS idx_alloc_team   ON allocations (team_id)`,
+    `CREATE INDEX IF NOT EXISTS idx_alloc_status ON allocations (status)`,
+    // Scheduler events indexes
+    `CREATE INDEX IF NOT EXISTS idx_se_request ON scheduler_events (request_id)`,
+    `CREATE INDEX IF NOT EXISTS idx_se_type    ON scheduler_events (event_type)`,
+    `CREATE INDEX IF NOT EXISTS idx_se_created ON scheduler_events (created_at)`,
+    // Resource locks indexes
+    `CREATE INDEX IF NOT EXISTS idx_rl_resource ON resource_locks (resource_id)`,
+    `CREATE INDEX IF NOT EXISTS idx_rl_status   ON resource_locks (lock_status)`,
+    // Audit logs indexes
+    `CREATE INDEX IF NOT EXISTS idx_al_user    ON audit_logs (user_id)`,
+    `CREATE INDEX IF NOT EXISTS idx_al_action  ON audit_logs (action)`,
+    `CREATE INDEX IF NOT EXISTS idx_al_entity  ON audit_logs (entity_type, entity_id)`,
+    `CREATE INDEX IF NOT EXISTS idx_al_created ON audit_logs (created_at)`,
+
     // system settings
     `CREATE TABLE IF NOT EXISTS system_settings (
       key_name   VARCHAR(100) PRIMARY KEY,
@@ -244,7 +293,9 @@ async function runMigrations() {
       ('min_team_size',         '2'),
       ('max_mentor_capacity',   '5'),
       ('request_cooldown_minutes','5'),
-      ('allocation_window_open','true')`,
+      ('allocation_window_open','true'),
+      ('request_timeout_seconds', '600'),
+      ('rr_last_request_id',      '')`,
   ];
 
   for (const stmt of statements) {
@@ -260,7 +311,10 @@ async function runMigrations() {
     }
   }
 
-  await conn.end();
+  // Run 002 DBMS academic objects
+  try { const m = await import('./apply002'); await m.apply002(); } catch(e:any){ console.warn('[002]',e.message); }
+
+    await conn.end();
   console.log('✅ Migrations complete');
 }
 

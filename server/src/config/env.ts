@@ -16,14 +16,14 @@ const envSchema = z.object({
   BCRYPT_ROUNDS: z.coerce.number().default(12),
   MAX_TEAM_SIZE: z.coerce.number().default(4),
   MIN_TEAM_SIZE: z.coerce.number().default(2),
-  SCHEDULER_ALGORITHM: z.enum(['FCFS', 'PRIORITY']).default('FCFS'),
+  SCHEDULER_ALGORITHM: z.enum(['FCFS', 'PRIORITY', 'ROUND_ROBIN']).default('FCFS'),
   CORS_ORIGIN: z.string().default('http://localhost:5173'),
 });
 
 const parsed = envSchema.safeParse(process.env);
 
 if (!parsed.success) {
-  console.error('❌ Invalid environment variables:');
+  console.error('Invalid environment variables:');
   console.error(parsed.error.flatten().fieldErrors);
   process.exit(1);
 }

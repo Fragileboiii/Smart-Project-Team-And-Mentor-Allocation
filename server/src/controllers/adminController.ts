@@ -2,6 +2,8 @@ import { Request, Response, NextFunction } from 'express';
 import { z } from 'zod';
 import pool from '../config/database';
 import { RowDataPacket } from 'mysql2/promise';
+import { v4 as uuidv4 } from 'uuid';
+import { writeAuditLog } from '../utils/audit';
 
 export async function getAnalytics(req: Request, res: Response, next: NextFunction) {
   try {
@@ -92,5 +94,87 @@ export async function listAllUsers(req: Request, res: Response, next: NextFuncti
       'SELECT id, email, role, first_name, last_name, is_active, created_at FROM users ORDER BY created_at DESC'
     );
     return res.json(rows);
+  } catch (e) { next(e); }
+}
+
+
+const createCycleSchema = z.object({
+  name: z.string().min(2).max(100),
+  semester: z.string().min(1),
+  year: z.coerce.number().int(),
+  minTeamSize: z.coerce.number().int().min(1).optional(),
+  maxTeamSize: z.coerce.number().int().min(1).optional(),
+  isActive: z.boolean().optional(),
+});
+
+export async function createCycle(req: Request, res: Response, next: NextFunction) {
+  try {
+    const body = createCycleSchema.parse(req.body);
+    const id = uuidv4();
+    if (body.isActive) {
+      await pool.execute('UPDATE project_cycles SET is_active=false');
+    }
+    await pool.execute(
+      'INSERT INTO project_cycles (id,name,semester,year,min_team_size,max_team_size,is_active) VALUES (?,?,?,?,?,?,?)',
+      [id, body.name, body.semester, body.year, body.minTeamSize ?? 2, body.maxTeamSize ?? 4, body.isActive ?? false]
+    );
+    await writeAuditLog(req.user!.id, 'CREATE_CYCLE', 'cycle', id, null, body, req.ip);
+    return res.status(201).json({ id, message: 'Cycle created' });
+  } catch (e) { next(e); }
+}
+
+const updateCycleSchema = z.object({
+  name: z.string().optional(),
+  semester: z.string().optional(),
+  year: z.coerce.number().int().optional(),
+  minTeamSize: z.coerce.number().int().min(1).optional(),
+  maxTeamSize: z.coerce.number().int().min(1).optional(),
+  isActive: z.boolean().optional(),
+});
+
+export async function updateCycle(req: Request, res: Response, next: NextFunction) {
+  try {
+    const body = updateCycleSchema.parse(req.body);
+    const { id } = req.params;
+    if (body.isActive) {
+      await pool.execute('UPDATE project_cycles SET is_active=false');
+    }
+    await pool.execute(
+      `UPDATE project_cycles SET name=COALESCE(?,name), semester=COALESCE(?,semester), year=COALESCE(?,year), min_team_size=COALESCE(?,min_team_size), max_team_size=COALESCE(?,max_team_size) WHERE id=?`,
+      [body.name ?? null, body.semester ?? null, body.year ?? null, body.minTeamSize ?? null, body.maxTeamSize ?? null, id]
+    );
+    if (body.isActive !== undefined) {
+      await pool.execute('UPDATE project_cycles SET is_active=? WHERE id=?', [body.isActive, id]);
+    }
+    await writeAuditLog(req.user!.id, 'UPDATE_CYCLE', 'cycle', id, null, body, req.ip);
+    return res.json({ message: 'Cycle updated' });
+  } catch (e) { next(e); }
+}
+
+const updateUserSchema = z.object({
+  firstName: z.string().optional(),
+  lastName: z.string().optional(),
+  isActive: z.boolean().optional(),
+});
+
+export async function updateUser(req: Request, res: Response, next: NextFunction) {
+  try {
+    const body = updateUserSchema.parse(req.body);
+    const { id } = req.params;
+    // Prevent deactivating yourself
+    if (body.isActive === false && req.user!.id === id) {
+      return res.status(400).json({ error: 'Cannot deactivate your own account' });
+    }
+    await pool.execute(
+      `UPDATE users SET
+        first_name = COALESCE(?, first_name),
+        last_name  = COALESCE(?, last_name),
+        is_active  = COALESCE(?, is_active),
+        updated_at = NOW()
+       WHERE id = ?`,
+      [body.firstName ?? null, body.lastName ?? null, body.isActive ?? null, id]
+    );
+    await writeAuditLog(req.user!.id, 'ADMIN_UPDATE_USER', 'user', id, null, body, req.ip);
+    return res.json({ message: 'User updated' });
   } catch (e) { next(e); }
 }

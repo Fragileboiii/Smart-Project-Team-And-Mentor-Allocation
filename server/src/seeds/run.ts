@@ -15,46 +15,68 @@ async function seed() {
   });
 
   console.log('🌱 Seeding database...');
-
   const hash = (pw: string) => bcrypt.hashSync(pw, 10);
 
-  // IDs
-  const adminUserId   = uuidv4();
-  const m1UserId = uuidv4(); const m2UserId = uuidv4(); const m3UserId = uuidv4();
-  const m4UserId = uuidv4(); const m5UserId = uuidv4(); const m6UserId = uuidv4();
-  const m7UserId = uuidv4(); const m8UserId = uuidv4(); const m9UserId = uuidv4();
+  // ── Skills catalogue ────────────────────────────────────────────────────────
+  const skillDefs = [
+    { name: 'React', category: 'Frontend' },
+    { name: 'Node.js', category: 'Backend' },
+    { name: 'Python', category: 'Backend' },
+    { name: 'MySQL', category: 'Database' },
+    { name: 'Machine Learning', category: 'AI/ML' },
+    { name: 'TypeScript', category: 'Frontend' },
+    { name: 'Java', category: 'Backend' },
+    { name: 'System Design', category: 'Architecture' },
+    { name: 'OS Concepts', category: 'Systems' },
+    { name: 'DBMS', category: 'Database' },
+    { name: 'Cybersecurity', category: 'Security' },
+    { name: 'Cloud Computing', category: 'Cloud/DevOps' },
+    { name: 'Mobile Development', category: 'Mobile' },
+    { name: 'Blockchain', category: 'Web3' },
+    { name: 'Big Data', category: 'Data Engineering' },
+  ];
+  const skills = skillDefs.map(s => ({ id: uuidv4(), ...s }));
+  const skillMap: Record<string, string> = {};
+  skills.forEach(s => { skillMap[s.name] = s.id; });
 
-  const s1UserId = uuidv4(); const s2UserId = uuidv4(); const s3UserId = uuidv4();
-  const s4UserId = uuidv4(); const s5UserId = uuidv4(); const s6UserId = uuidv4();
-  const s7UserId = uuidv4(); const s8UserId = uuidv4();
+  // ── Mentors ─────────────────────────────────────────────────────────────────
+  const mentors = [
+    { first: 'Priya',   last: 'Sharma',  email: 'priya.sharma@smartalloc.edu',  emp: 'EMP001', dept: 'CSE', designation: 'Associate Professor', domain: 'OS/DBMS',                 bio: 'Expert in OS, DBMS, and distributed systems.', capacity: 3, skills: ['OS Concepts', 'DBMS', 'Python', 'System Design'] },
+    { first: 'Rajesh',  last: 'Kumar',   email: 'rajesh.kumar@smartalloc.edu',  emp: 'EMP002', dept: 'CSE', designation: 'Assistant Professor',  domain: 'Machine Learning',        bio: 'Specializes in ML, AI, and data science.', capacity: 2, skills: ['Machine Learning', 'Python', 'MySQL'] },
+    { first: 'Anita',   last: 'Singh',   email: 'anita.singh@smartalloc.edu',   emp: 'EMP003', dept: 'IT',  designation: 'Associate Professor',  domain: 'Web Development',         bio: 'Full-stack development, modern frontend, and software engineering.', capacity: 3, skills: ['React', 'Node.js', 'TypeScript', 'System Design'] },
+    { first: 'Vikram',  last: 'Joshi',   email: 'vikram.joshi@smartalloc.edu',  emp: 'EMP004', dept: 'CSE', designation: 'Professor',             domain: 'Cybersecurity',            bio: 'Network security, ethical hacking, and cryptography.', capacity: 3, skills: ['Cybersecurity', 'OS Concepts', 'Python', 'System Design'] },
+    { first: 'Sneha',   last: 'Patel',   email: 'sneha.patel@smartalloc.edu',   emp: 'EMP005', dept: 'IT',  designation: 'Assistant Professor',  domain: 'Cloud/DevOps',            bio: 'Cloud architecture, Docker, Kubernetes, and CI/CD pipelines.', capacity: 3, skills: ['Cloud Computing', 'Node.js', 'System Design', 'Python'] },
+    { first: 'Amit',    last: 'Verma',   email: 'amit.verma@smartalloc.edu',    emp: 'EMP006', dept: 'CSE', designation: 'Associate Professor',  domain: 'Artificial Intelligence', bio: 'Deep learning, computer vision, and neural network architectures.', capacity: 2, skills: ['Machine Learning', 'Python', 'System Design'] },
+    { first: 'Neha',    last: 'Gupta',    email: 'neha.gupta@smartalloc.edu',    emp: 'EMP007', dept: 'CSE', designation: 'Assistant Professor',  domain: 'Mobile Computing',        bio: 'Cross-platform mobile apps, Flutter, and React Native.', capacity: 3, skills: ['Mobile Development', 'React', 'TypeScript', 'Node.js'] },
+    { first: 'Rohan',   last: 'Mehta',   email: 'rohan.mehta@smartalloc.edu',   emp: 'EMP008', dept: 'IT',  designation: 'Associate Professor',  domain: 'Data Engineering',        bio: 'Big data pipelines, distributed computing, and database optimization.', capacity: 3, skills: ['Big Data', 'DBMS', 'MySQL', 'Python', 'System Design'] },
+    { first: 'Kavita',  last: 'Rao',     email: 'kavita.rao@smartalloc.edu',     emp: 'EMP009', dept: 'CSE', designation: 'Assistant Professor',  domain: 'Blockchain/Web3',          bio: 'Decentralized systems, smart contracts, and Web3 architectures.', capacity: 2, skills: ['Blockchain', 'Cybersecurity', 'System Design', 'Python'] },
+    { first: 'Sanjay',  last: 'Nair',    email: 'sanjay.nair@smartalloc.edu',    emp: 'EMP010', dept: 'CSE', designation: 'Professor',             domain: 'IoT/Embedded Systems',     bio: 'Embedded systems, IoT architectures, and edge computing.', capacity: 3, skills: ['Python', 'OS Concepts', 'System Design', 'Mobile Development'] },
+    { first: 'Meera',   last: 'Joshi',   email: 'meera.joshi@smartalloc.edu',    emp: 'EMP011', dept: 'IT',  designation: 'Associate Professor',  domain: 'Data Science',            bio: 'Statistical modelling, data wrangling, and analytics.', capacity: 3, skills: ['Machine Learning', 'Python', 'Big Data', 'MySQL'] },
+    { first: 'Arvind',  last: 'Krishna', email: 'arvind.krishna@smartalloc.edu', emp: 'EMP012', dept: 'CSE', designation: 'Assistant Professor',  domain: 'AR/VR & Graphics',         bio: 'Computer graphics, AR/VR pipelines, and creative coding.', capacity: 2, skills: ['React', 'TypeScript', 'Mobile Development', 'System Design'] },
+  ];
 
-  const m1Id = uuidv4(); const m2Id = uuidv4(); const m3Id = uuidv4();
-  const m4Id = uuidv4(); const m5Id = uuidv4(); const m6Id = uuidv4();
-  const m7Id = uuidv4(); const m8Id = uuidv4(); const m9Id = uuidv4();
-
-  const s1Id = uuidv4(); const s2Id = uuidv4(); const s3Id = uuidv4();
-  const s4Id = uuidv4(); const s5Id = uuidv4(); const s6Id = uuidv4();
-  const s7Id = uuidv4(); const s8Id = uuidv4();
-  const cycleId = uuidv4();
-  const team1Id = uuidv4(); const team2Id = uuidv4();
-
-  // Skills
-  const skills = [
-    { id: uuidv4(), name: 'React',              category: 'Frontend' },
-    { id: uuidv4(), name: 'Node.js',            category: 'Backend'  },
-    { id: uuidv4(), name: 'Python',             category: 'Backend'  },
-    { id: uuidv4(), name: 'MySQL',              category: 'Database' },
-    { id: uuidv4(), name: 'Machine Learning',   category: 'AI/ML' },
-    { id: uuidv4(), name: 'TypeScript',         category: 'Frontend' },
-    { id: uuidv4(), name: 'Java',               category: 'Backend'  },
-    { id: uuidv4(), name: 'System Design',      category: 'Architecture' },
-    { id: uuidv4(), name: 'OS Concepts',        category: 'Systems'  },
-    { id: uuidv4(), name: 'DBMS',               category: 'Database' },
-    { id: uuidv4(), name: 'Cybersecurity',      category: 'Security' },
-    { id: uuidv4(), name: 'Cloud Computing',    category: 'Cloud/DevOps' },
-    { id: uuidv4(), name: 'Mobile Development', category: 'Mobile' },
-    { id: uuidv4(), name: 'Blockchain',         category: 'Web3' },
-    { id: uuidv4(), name: 'Big Data',           category: 'Data Engineering' },
+  // ── Students (sections spread across A/B/C/D) ───────────────────────────────
+  const students = [
+    { first: 'Aditya',     last: 'Bisht',     email: 'aditya.bisht@smartalloc.edu',          roll: '24021285',  dept: 'CSE', sem: 5, cgpa: 8.5, section: 'A', bio: 'Passionate about backend systems.',          interests: 'OS, DBMS, Web Development',      skills: [['Node.js', 'advanced'], ['MySQL', 'intermediate'], ['OS Concepts', 'intermediate']] },
+    { first: 'Amritanshu', last: 'Purohit',   email: 'amritanshu.purohit@smartalloc.edu',    roll: '240211559', dept: 'CSE', sem: 5, cgpa: 8.2, section: 'A', bio: 'Interested in ML and data.',                interests: 'Machine Learning, Python',      skills: [['Python', 'advanced'], ['Machine Learning', 'intermediate']] },
+    { first: 'Ananya',     last: 'Nautiyal',  email: 'ananya.nautiyal@smartalloc.edu',       roll: '24012254',  dept: 'CSE', sem: 5, cgpa: 8.8, section: 'B', bio: 'UI/UX and frontend enthusiast.',            interests: 'React, TypeScript, UI Design',   skills: [['React', 'advanced'], ['TypeScript', 'advanced']] },
+    { first: 'Aryan',      last: 'Barthwal',  email: 'aryan.barthwal@smartalloc.edu',        roll: '240212203', dept: 'CSE', sem: 5, cgpa: 7.9, section: 'B', bio: 'System design and architecture.',          interests: 'System Design, Java, OS',       skills: [['Java', 'advanced'], ['System Design', 'intermediate'], ['OS Concepts', 'intermediate']] },
+    { first: 'Riya',       last: 'Gupta',     email: 'riya.gupta@smartalloc.edu',            roll: '24099001',  dept: 'IT',  sem: 5, cgpa: 8.1, section: 'C', bio: 'Web and mobile developer.',                interests: 'React, Node.js, Mobile',        skills: [['React', 'intermediate'], ['Node.js', 'intermediate']] },
+    { first: 'Karan',      last: 'Mehta',     email: 'karan.mehta@smartalloc.edu',           roll: '24099002',  dept: 'CSE', sem: 5, cgpa: 7.7, section: 'C', bio: 'Database and backend focus.',              interests: 'MySQL, Python, APIs',           skills: [['MySQL', 'advanced'], ['Python', 'intermediate']] },
+    { first: 'Shreya',     last: 'Joshi',     email: 'shreya.joshi@smartalloc.edu',          roll: '24099003',  dept: 'CSE', sem: 5, cgpa: 8.6, section: 'D', bio: 'AI/ML researcher.',                         interests: 'Machine Learning, Python',      skills: [['Machine Learning', 'advanced'], ['Python', 'advanced']] },
+    { first: 'Vivek',      last: 'Rana',      email: 'vivek.rana@smartalloc.edu',             roll: '24099004',  dept: 'IT',  sem: 5, cgpa: 7.5, section: 'D', bio: 'Full-stack developer.',                    interests: 'React, Node.js, TypeScript',    skills: [['React', 'intermediate'], ['Node.js', 'advanced'], ['TypeScript', 'intermediate']] },
+    { first: 'Ishaan',     last: 'Verma',     email: 'ishaan.verma@smartalloc.edu',          roll: '24099005',  dept: 'CSE', sem: 5, cgpa: 8.0, section: 'A', bio: 'Cloud-native tinkerer.',                   interests: 'Cloud, DevOps, Node.js',         skills: [['Cloud Computing', 'intermediate'], ['Node.js', 'intermediate']] },
+    { first: 'Nisha',      last: 'Rao',       email: 'nisha.rao@smartalloc.edu',              roll: '24099006',  dept: 'IT',  sem: 5, cgpa: 8.3, section: 'B', bio: 'Mobile-first builder.',                    interests: 'React, Mobile',                 skills: [['React', 'advanced'], ['Mobile Development', 'intermediate']] },
+    { first: 'Rohit',      last: 'Singh',     email: 'rohit.singh@smartalloc.edu',           roll: '24099007',  dept: 'CSE', sem: 5, cgpa: 7.6, section: 'C', bio: 'Systems & concurrency nerd.',              interests: 'Java, OS',                      skills: [['Java', 'advanced'], ['OS Concepts', 'intermediate']] },
+    { first: 'Pooja',      last: 'Nair',      email: 'pooja.nair@smartalloc.edu',            roll: '24099008',  dept: 'CSE', sem: 5, cgpa: 8.4, section: 'D', bio: 'Data pipelines enthusiast.',              interests: 'Big Data, Python',             skills: [['Machine Learning', 'intermediate'], ['Python', 'advanced'], ['Big Data', 'intermediate']] },
+    { first: 'Arjun',      last: 'Malhotra',  email: 'arjun.malhotra@smartalloc.edu',        roll: '24099009',  dept: 'IT',  sem: 5, cgpa: 7.8, section: 'A', bio: 'Web3 explorer.',                           interests: 'Blockchain, Security',          skills: [['Blockchain', 'intermediate'], ['Cybersecurity', 'intermediate']] },
+    { first: 'Sneha',      last: 'Reddy',     email: 'sneha.reddy@smartalloc.edu',           roll: '24099010',  dept: 'CSE', sem: 5, cgpa: 8.1, section: 'B', bio: 'Frontend craftsman.',                      interests: 'React, TypeScript',            skills: [['React', 'intermediate'], ['TypeScript', 'intermediate']] },
+    { first: 'Manav',      last: 'Shah',      email: 'manav.shah@smartalloc.edu',            roll: '24099011',  dept: 'CSE', sem: 5, cgpa: 7.9, section: 'C', bio: 'Cloud & automation fan.',                  interests: 'Cloud, Python',               skills: [['Cloud Computing', 'advanced'], ['Python', 'intermediate']] },
+    { first: 'Kavya',      last: 'Iyer',      email: 'kavya.iyer@smartalloc.edu',             roll: '24099012',  dept: 'IT',  sem: 5, cgpa: 8.2, section: 'D', bio: 'Database optimizer.',                     interests: 'DBMS, MySQL',                 skills: [['DBMS', 'advanced'], ['MySQL', 'advanced']] },
+    { first: 'Devansh',    last: 'Kapoor',    email: 'devansh.kapoor@smartalloc.edu',        roll: '24099013',  dept: 'CSE', sem: 5, cgpa: 7.7, section: 'A', bio: 'Mobile app lover.',                       interests: 'Mobile, React',               skills: [['Mobile Development', 'intermediate'], ['React', 'intermediate']] },
+    { first: 'Tanya',      last: 'Menon',     email: 'tanya.menon@smartalloc.edu',           roll: '24099014',  dept: 'CSE', sem: 5, cgpa: 8.0, section: 'B', bio: 'ML hobbyist.',                            interests: 'ML, Python',                  skills: [['Machine Learning', 'intermediate'], ['Python', 'intermediate']] },
+    { first: 'Sahil',      last: 'Khan',      email: 'sahil.khan@smartalloc.edu',             roll: '24099015',  dept: 'IT',  sem: 5, cgpa: 7.6, section: 'C', bio: 'API & backend dev.',                      interests: 'Node.js, MySQL',               skills: [['Node.js', 'advanced'], ['MySQL', 'intermediate']] },
+    { first: 'Ishita',     last: 'Bose',      email: 'ishita.bose@smartalloc.edu',           roll: '24099016',  dept: 'CSE', sem: 5, cgpa: 8.1, section: 'D', bio: 'Security mindset.',                       interests: 'Cybersecurity, Blockchain',   skills: [['Cybersecurity', 'intermediate'], ['Blockchain', 'intermediate']] },
   ];
 
   // Clear in FK-safe order (children before parents)
@@ -64,137 +86,64 @@ async function seed() {
     'team_invitations', 'team_members', 'teams',
     'student_skills', 'mentor_skills',
     'students', 'mentors', 'users',
-    'skills', 'project_cycles', 'system_settings'
+    'skills', 'project_cycles', 'system_settings',
   ];
   for (const t of tables) {
     await conn.execute(`DELETE FROM \`${t}\``);
   }
 
   // Project cycle
+  const cycleId = uuidv4();
   await conn.execute(
     `INSERT INTO project_cycles (id,name,semester,year,min_team_size,max_team_size,is_active)
      VALUES (?,?,?,?,?,?,?)`,
     [cycleId, 'PBL Semester 5', 'Odd', 2024, 2, 4, true]
   );
 
-  // Users
+  // Admin user
+  const adminUserId = uuidv4();
   await conn.execute(
-    `INSERT INTO users (id,email,password_hash,role,first_name,last_name) VALUES
-     (?,?,?,'admin','System','Admin'),
-     (?,?,?,'mentor','Dr. Priya','Sharma'),
-     (?,?,?,'mentor','Prof. Rajesh','Kumar'),
-     (?,?,?,'mentor','Dr. Anita','Singh'),
-     (?,?,?,'mentor','Dr. Vikram','Joshi'),
-     (?,?,?,'mentor','Prof. Sneha','Patel'),
-     (?,?,?,'mentor','Dr. Amit','Verma'),
-     (?,?,?,'mentor','Prof. Neha','Gupta'),
-     (?,?,?,'mentor','Dr. Rohan','Mehta'),
-     (?,?,?,'mentor','Prof. Kavita','Rao'),
-     (?,?,?,'student','Aditya','Bisht'),
-     (?,?,?,'student','Amritanshu','Purohit'),
-     (?,?,?,'student','Ananya','Nautiyal'),
-     (?,?,?,'student','Aryan','Barthwal'),
-     (?,?,?,'student','Riya','Gupta'),
-     (?,?,?,'student','Karan','Mehta'),
-     (?,?,?,'student','Shreya','Joshi'),
-     (?,?,?,'student','Vivek','Rana')`,
-    [
-      adminUserId, 'admin@smartalloc.edu', hash('Admin@123'),
-      m1UserId,    'priya.sharma@smartalloc.edu', hash('Mentor@123'),
-      m2UserId,    'rajesh.kumar@smartalloc.edu', hash('Mentor@123'),
-      m3UserId,    'anita.singh@smartalloc.edu',  hash('Mentor@123'),
-      m4UserId,    'vikram.joshi@smartalloc.edu', hash('Mentor@123'),
-      m5UserId,    'sneha.patel@smartalloc.edu',  hash('Mentor@123'),
-      m6UserId,    'amit.verma@smartalloc.edu',   hash('Mentor@123'),
-      m7UserId,    'neha.gupta@smartalloc.edu',   hash('Mentor@123'),
-      m8UserId,    'rohan.mehta@smartalloc.edu',  hash('Mentor@123'),
-      m9UserId,    'kavita.rao@smartalloc.edu',   hash('Mentor@123'),
-      s1UserId,    'aditya.bisht@smartalloc.edu',    hash('Student@123'),
-      s2UserId,    'amritanshu.purohit@smartalloc.edu', hash('Student@123'),
-      s3UserId,    'ananya.nautiyal@smartalloc.edu', hash('Student@123'),
-      s4UserId,    'aryan.barthwal@smartalloc.edu', hash('Student@123'),
-      s5UserId,    'riya.gupta@smartalloc.edu',     hash('Student@123'),
-      s6UserId,    'karan.mehta@smartalloc.edu',    hash('Student@123'),
-      s7UserId,    'shreya.joshi@smartalloc.edu',   hash('Student@123'),
-      s8UserId,    'vivek.rana@smartalloc.edu',     hash('Student@123'),
-    ]
-  );
-
-  // Mentors with specific domains
-  await conn.execute(
-    `INSERT INTO mentors (id,user_id,employee_id,department,designation,domain,bio,max_capacity,is_available) VALUES
-     (?,?,'EMP001','CSE','Associate Professor','OS/DBMS','Expert in OS, DBMS, and distributed systems.',3,true),
-     (?,?,'EMP002','CSE','Assistant Professor','Machine Learning','Specializes in ML, AI, and data science.',2,true),
-     (?,?,'EMP003','IT', 'Associate Professor','Web Development','Full-stack development, modern frontend, and software engineering.',3,true),
-     (?,?,'EMP004','CSE','Professor',          'Cybersecurity','Network security, ethical hacking, and cryptography.',3,true),
-     (?,?,'EMP005','IT', 'Assistant Professor','Cloud/DevOps','Cloud architecture, Docker, Kubernetes, and CI/CD pipelines.',3,true),
-     (?,?,'EMP006','CSE','Associate Professor','Artificial Intelligence','Deep learning, computer vision, and neural network architectures.',2,true),
-     (?,?,'EMP007','CSE','Assistant Professor','Mobile Computing','Cross-platform mobile apps, Flutter, and React Native.',3,true),
-     (?,?,'EMP008','IT', 'Associate Professor','Data Engineering','Big data pipelines, distributed computing, and database optimization.',3,true),
-     (?,?,'EMP009','CSE','Assistant Professor','Blockchain/Web3','Decentralized systems, smart contracts, and Web3 architectures.',2,true)`,
-    [
-      m1Id,m1UserId, m2Id,m2UserId, m3Id,m3UserId,
-      m4Id,m4UserId, m5Id,m5UserId, m6Id,m6UserId,
-      m7Id,m7UserId, m8Id,m8UserId, m9Id,m9UserId,
-    ]
-  );
-
-  // Students
-  await conn.execute(
-    `INSERT INTO students (id,user_id,roll_number,department,semester,cgpa,bio,project_interests) VALUES
-     (?,?,'24021285','CSE',5,8.5,'Passionate about backend systems.','OS, DBMS, Web Development'),
-     (?,?,'240211559','CSE',5,8.2,'Interested in ML and data.','Machine Learning, Python'),
-     (?,?,'24012254','CSE',5,8.8,'UI/UX and frontend enthusiast.','React, TypeScript, UI Design'),
-     (?,?,'240212203','CSE',5,7.9,'System design and architecture.','System Design, Java, OS'),
-     (?,?,'24099001','IT',5,8.1,'Web and mobile developer.','React, Node.js, Mobile'),
-     (?,?,'24099002','CSE',5,7.7,'Database and backend focus.','MySQL, Python, APIs'),
-     (?,?,'24099003','CSE',5,8.6,'AI/ML researcher.','Machine Learning, Python'),
-     (?,?,'24099004','IT',5,7.5,'Full-stack developer.','React, Node.js, TypeScript')`,
-    [
-      s1Id,s1UserId, s2Id,s2UserId, s3Id,s3UserId, s4Id,s4UserId,
-      s5Id,s5UserId, s6Id,s6UserId, s7Id,s7UserId, s8Id,s8UserId,
-    ]
+    'INSERT INTO users (id,email,password_hash,role,first_name,last_name) VALUES (?,?,?,?,?,?)',
+    [adminUserId, 'admin@smartalloc.edu', hash('Admin@123'), 'admin', 'System', 'Admin']
   );
 
   // Skills
   for (const sk of skills) {
-    await conn.execute('INSERT INTO skills (id,name,category) VALUES (?,?,?)', [sk.id,sk.name,sk.category]);
+    await conn.execute('INSERT INTO skills (id,name,category) VALUES (?,?,?)', [sk.id, sk.name, sk.category]);
   }
 
-  const skillMap: Record<string,string> = {};
-  skills.forEach(s => { skillMap[s.name] = s.id; });
-
-  // Mentor skills
-  const mentorSkillData = [
-    [m1Id, ['OS Concepts','DBMS','Python','System Design']],
-    [m2Id, ['Machine Learning','Python','MySQL']],
-    [m3Id, ['React','Node.js','TypeScript','System Design']],
-    [m4Id, ['Cybersecurity','OS Concepts','Python','System Design']],
-    [m5Id, ['Cloud Computing','Node.js','System Design','Python']],
-    [m6Id, ['Machine Learning','Python','System Design']],
-    [m7Id, ['Mobile Development','React','TypeScript','Node.js']],
-    [m8Id, ['Big Data','DBMS','MySQL','Python','System Design']],
-    [m9Id, ['Blockchain','Cybersecurity','System Design','Python']],
-  ] as [string, string[]][];
-  for (const [mid, sks] of mentorSkillData) {
-    for (const sk of sks) {
+  // Mentors
+  for (const m of mentors) {
+    const uid = uuidv4();
+    const mid = uuidv4();
+    await conn.execute(
+      'INSERT INTO users (id,email,password_hash,role,first_name,last_name) VALUES (?,?,?,?,?,?)',
+      [uid, m.email, hash('Mentor@123'), 'mentor', m.first, m.last]
+    );
+    await conn.execute(
+      'INSERT INTO mentors (id,user_id,employee_id,department,designation,domain,bio,max_capacity,is_available) VALUES (?,?,?,?,?,?,?,?,true)',
+      [mid, uid, m.emp, m.dept, m.designation, m.domain, m.bio, m.capacity]
+    );
+    for (const sk of m.skills) {
       if (skillMap[sk]) await conn.execute('INSERT INTO mentor_skills (mentor_id,skill_id) VALUES (?,?)', [mid, skillMap[sk]]);
     }
   }
 
-  // Student skills
-  const studentSkillData = [
-    [s1Id, [['Node.js','advanced'],['MySQL','intermediate'],['OS Concepts','intermediate']]],
-    [s2Id, [['Python','advanced'],['Machine Learning','intermediate']]],
-    [s3Id, [['React','advanced'],['TypeScript','advanced']]],
-    [s4Id, [['Java','advanced'],['System Design','intermediate'],['OS Concepts','intermediate']]],
-    [s5Id, [['React','intermediate'],['Node.js','intermediate']]],
-    [s6Id, [['MySQL','advanced'],['Python','intermediate']]],
-    [s7Id, [['Machine Learning','advanced'],['Python','advanced']]],
-    [s8Id, [['React','intermediate'],['Node.js','advanced'],['TypeScript','intermediate']]],
-  ] as [string, [string, string][]][];
-  for (const [sid, sks] of studentSkillData) {
-    for (const [skName, prof] of sks) {
+  // Students
+  const studentIds: string[] = [];
+  for (const s of students) {
+    const uid = uuidv4();
+    const sid = uuidv4();
+    studentIds.push(sid);
+    await conn.execute(
+      'INSERT INTO users (id,email,password_hash,role,first_name,last_name) VALUES (?,?,?,?,?,?)',
+      [uid, s.email, hash('Student@123'), 'student', s.first, s.last]
+    );
+    await conn.execute(
+      'INSERT INTO students (id,user_id,roll_number,department,semester,cgpa,bio,project_interests,section) VALUES (?,?,?,?,?,?,?,?,?)',
+      [sid, uid, s.roll, s.dept, s.sem, s.cgpa, s.bio, s.interests, s.section]
+    );
+    for (const [skName, prof] of s.skills) {
       if (skillMap[skName]) {
         await conn.execute(
           'INSERT INTO student_skills (student_id,skill_id,proficiency) VALUES (?,?,?)',
@@ -204,40 +153,44 @@ async function seed() {
     }
   }
 
-  // Teams
+  // Teams — every member from a DISTINCT section (honours the no-same-section rule)
+  // indices: 0 Aditya(A) 1 Amritanshu(A) 2 Ananya(B) 3 Aryan(B) 4 Riya(C)
+  //          5 Karan(C) 6 Shreya(D) 7 Vivek(D) 11 Pooja(D)
+  const team1Id = uuidv4();
   await conn.execute(
-    `INSERT INTO teams (id,cycle_id,name,description,project_topic,project_domain,leader_id,status) VALUES
-     (?,?,'The Incredibles','SmartAlloc project team','Smart Allocation System','OS/DBMS',?,'active'),
-     (?,?,'Code Crusaders','ML-based recommendation system','Recommendation Engine','Machine Learning',?,'forming')`,
-    [team1Id,cycleId,s1Id, team2Id,cycleId,s5Id]
+    `INSERT INTO teams (id,cycle_id,name,description,project_topic,project_domain,leader_id,status)
+     VALUES (?,?,?,?,?,?,?,?)`,
+    [team1Id, cycleId, 'The Incredibles', 'SmartAlloc project team', 'Smart Allocation System', 'OS/DBMS', studentIds[1], 'active']
   );
+  for (const idx of [1, 2, 4, 6]) { // Amritanshu(A), Ananya(B), Riya(C), Shreya(D)
+    await conn.execute('INSERT INTO team_members (id,team_id,student_id) VALUES (?,?,?)', [uuidv4(), team1Id, studentIds[idx]]);
+  }
 
-  // Team members
+  const team2Id = uuidv4();
   await conn.execute(
-    `INSERT INTO team_members (id,team_id,student_id) VALUES
-     (?,?,?),(?,?,?),(?,?,?),(?,?,?)`,
-    [uuidv4(),team1Id,s1Id, uuidv4(),team1Id,s2Id, uuidv4(),team1Id,s3Id, uuidv4(),team1Id,s4Id]
+    `INSERT INTO teams (id,cycle_id,name,description,project_topic,project_domain,leader_id,status)
+     VALUES (?,?,?,?,?,?,?,?)`,
+    [team2Id, cycleId, 'Code Crusaders', 'ML-based recommendation system', 'Recommendation Engine', 'Machine Learning', studentIds[5], 'forming']
   );
-  await conn.execute(
-    `INSERT INTO team_members (id,team_id,student_id) VALUES (?,?,?)`,
-    [uuidv4(),team2Id,s5Id]
-  );
+  for (const idx of [5, 11]) { // Karan(C), Pooja(D)
+    await conn.execute('INSERT INTO team_members (id,team_id,student_id) VALUES (?,?,?)', [uuidv4(), team2Id, studentIds[idx]]);
+  }
+
+  // Aditya (index 0, section A) is intentionally left WITHOUT a team so the
+  // demo login can browse Discover and use Auto-Match.
 
   await conn.end();
   console.log('✅ Seed complete');
   console.log('');
-  console.log('Demo credentials (Password for all Mentors: Mentor@123):');
+  console.log('Demo credentials:');
   console.log('  Admin:   admin@smartalloc.edu / Admin@123');
-  console.log('  Mentor (OS/DBMS):              priya.sharma@smartalloc.edu');
-  console.log('  Mentor (Machine Learning):     rajesh.kumar@smartalloc.edu');
-  console.log('  Mentor (Web Development):      anita.singh@smartalloc.edu');
-  console.log('  Mentor (Cybersecurity):        vikram.joshi@smartalloc.edu');
-  console.log('  Mentor (Cloud/DevOps):         sneha.patel@smartalloc.edu');
-  console.log('  Mentor (Artificial Intel):     amit.verma@smartalloc.edu');
-  console.log('  Mentor (Mobile Computing):     neha.gupta@smartalloc.edu');
-  console.log('  Mentor (Data Engineering):     rohan.mehta@smartalloc.edu');
-  console.log('  Mentor (Blockchain/Web3):      kavita.rao@smartalloc.edu');
-  console.log('  Student: aditya.bisht@smartalloc.edu / Student@123');
+  console.log('  Mentors (password Mentor@123):');
+  console.log('    priya.sharma / rajesh.kumar / anita.singh / vikram.joshi');
+  console.log('    sneha.patel / amit.verma / neha.gupta / rohan.mehta');
+  console.log('    kavita.rao / sanjay.nair / meera.joshi / arvind.krishna  @smartalloc.edu');
+  console.log('  Student (no team — ready to Discover & Auto-Match):');
+  console.log('    aditya.bisht@smartalloc.edu / Student@123');
+  console.log('  All other students share password Student@123');
 }
 
 seed().catch(err => {

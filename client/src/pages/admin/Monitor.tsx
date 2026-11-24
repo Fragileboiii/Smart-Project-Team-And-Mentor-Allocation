@@ -3,6 +3,7 @@ import Layout from '../../components/Layout';
 import { osApi } from '../../services/api';
 import StatusBadge from '../../components/StatusBadge';
 import { RefreshCw, Lock, Activity, Database, Network } from 'lucide-react';
+import clsx from 'clsx';
 
 export default function AdminMonitor() {
   const [resources, setResources] = useState<any[]>([]);
@@ -10,6 +11,7 @@ export default function AdminMonitor() {
   const [locks, setLocks] = useState<any[]>([]);
   const [graph, setGraph] = useState<any>(null);
   const [loading, setLoading] = useState(false);
+  const [autoRefresh, setAutoRefresh] = useState(false);
 
   function load() {
     setLoading(true);
@@ -24,6 +26,12 @@ export default function AdminMonitor() {
   }
 
   useEffect(() => { load(); }, []);
+
+  useEffect(() => {
+    if (!autoRefresh) return;
+    const id = setInterval(() => load(), 5000);
+    return () => clearInterval(id);
+  }, [autoRefresh]);
 
   const stateColors: Record<string, string> = {
     pending:    'bg-amber-500',
@@ -40,6 +48,9 @@ export default function AdminMonitor() {
       <div className="max-w-5xl mx-auto space-y-5">
         <div className="flex items-center justify-between">
           <h1 className="text-xl font-bold text-white">OS Resource Monitor</h1>
+          <button onClick={() => setAutoRefresh(v => !v)} className={clsx("btn-secondary flex items-center gap-2 text-sm", autoRefresh && "border-emerald-500/60 text-emerald-400")}>
+            <RefreshCw size={14} className={autoRefresh ? "animate-spin" : ""} /> {autoRefresh ? "Auto ON (5s)" : "Auto OFF"}
+          </button>
           <button onClick={load} disabled={loading} className="btn-secondary flex items-center gap-2 text-sm">
             <RefreshCw size={14} className={loading ? 'animate-spin' : ''} /> Refresh
           </button>

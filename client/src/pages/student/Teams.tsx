@@ -3,7 +3,7 @@ import Layout from '../../components/Layout';
 import { teamApi } from '../../services/api';
 import { Team } from '../../types';
 import StatusBadge from '../../components/StatusBadge';
-import { Plus, Users } from 'lucide-react';
+import { Plus, Users, Wand2 } from 'lucide-react';
 
 export default function StudentTeams() {
   const [teams, setTeams] = useState<Team[]>([]);
@@ -12,10 +12,15 @@ export default function StudentTeams() {
   const [form, setForm] = useState({ name: '', description: '', projectTopic: '', projectDomain: '' });
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
+  const [autoMatching, setAutoMatching] = useState(false);
 
   useEffect(() => {
     teamApi.list().then(r => setTeams(r.data)).finally(() => setLoading(false));
   }, []);
+
+  function reload() {
+    teamApi.list().then(r => setTeams(r.data));
+  }
 
   async function handleCreate(e: React.FormEvent) {
     e.preventDefault();
@@ -24,23 +29,57 @@ export default function StudentTeams() {
       await teamApi.create(form);
       setSuccess('Team created!');
       setShowCreate(false);
-      teamApi.list().then(r => setTeams(r.data));
+      setForm({ name: '', description: '', projectTopic: '', projectDomain: '' });
+      reload();
     } catch (err: any) {
       setError(err.response?.data?.error || 'Failed to create team');
+    }
+  }
+
+  async function autoMatch() {
+    setError(''); setSuccess('');
+    setAutoMatching(true);
+    try {
+      const res = await teamApi.autoMatch();
+      setSuccess(
+        (res.data.message || 'Auto-matched!') +
+        (res.data.teamName ? ` — "${res.data.teamName}" (${res.data.members} members)` : '')
+      );
+      reload();
+    } catch (err: any) {
+      setError(err.response?.data?.error || 'Auto-match failed');
+    } finally {
+      setAutoMatching(false);
     }
   }
 
   return (
     <Layout>
       <div className="max-w-4xl mx-auto space-y-5">
-        <div className="flex items-center justify-between">
+        <div className="flex items-center justify-between flex-wrap gap-2">
           <h1 className="text-xl font-bold text-white">Teams</h1>
-          <button onClick={() => setShowCreate(v => !v)} className="btn-primary flex items-center gap-2 text-sm">
-            <Plus size={16} /> Create Team
-          </button>
+          <div className="flex gap-2">
+            <button onClick={autoMatch} disabled={autoMatching} className="btn-secondary flex items-center gap-2 text-sm">
+              <Wand2 size={16} /> {autoMatching ? 'Matching...' : 'Auto-Match Me'}
+            </button>
+            <button onClick={() => setShowCreate(v => !v)} className="btn-primary flex items-center gap-2 text-sm">
+              <Plus size={16} /> Create Team
+            </button>
+          </div>
+        </div>
+
+        {/* Auto-Match explainer */}
+        <div className="card border-indigo-500/30 bg-indigo-950/20 text-xs text-slate-400 space-y-1">
+          <p className="font-semibold text-indigo-300 flex items-center gap-1.5"><Wand2 size={13} /> Auto-Match</p>
+          <p>
+            Instantly form a team with random students based on tech-stack compatibility.
+            Teams always respect the rule:{' '}
+            <span className="text-slate-300">no two members from the same section</span>.
+          </p>
         </div>
 
         {success && <div className="bg-emerald-500/20 text-emerald-400 rounded-lg px-4 py-2 text-sm">{success}</div>}
+        {error && <div className="bg-rose-500/20 text-rose-400 rounded-lg px-4 py-2 text-sm">{error}</div>}
 
         {showCreate && (
           <div className="card">
@@ -54,7 +93,6 @@ export default function StudentTeams() {
                 onChange={e => setForm(f => ({ ...f, projectTopic: e.target.value }))} />
               <input className="input" placeholder="Project domain (e.g. OS/DBMS, ML)" value={form.projectDomain}
                 onChange={e => setForm(f => ({ ...f, projectDomain: e.target.value }))} />
-              {error && <p className="text-rose-400 text-xs">{error}</p>}
               <div className="flex gap-3">
                 <button type="submit" className="btn-primary text-sm">Create</button>
                 <button type="button" onClick={() => setShowCreate(false)} className="btn-secondary text-sm">Cancel</button>
@@ -68,7 +106,7 @@ export default function StudentTeams() {
         ) : teams.length === 0 ? (
           <div className="card text-center py-12">
             <Users size={40} className="mx-auto text-slate-600 mb-3" />
-            <p className="text-slate-400">No teams found. Create one to get started.</p>
+            <p className="text-slate-400">No teams found. Create one or Auto-Match to get started.</p>
           </div>
         ) : (
           <div className="space-y-3">

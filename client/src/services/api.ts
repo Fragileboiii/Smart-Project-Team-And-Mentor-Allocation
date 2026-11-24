@@ -36,6 +36,7 @@ export const studentApi = {
   list: () => api.get('/students'),
   get: (id: string) => api.get(`/students/${id}`),
   getMe: () => api.get('/students/me'),
+  discover: () => api.get('/students/discover'),
   update: (id: string, d: any) => api.put(`/students/${id}`, d),
 };
 
@@ -56,9 +57,12 @@ export const teamApi = {
   get: (id: string) => api.get(`/teams/${id}`),
   getCooldown: (teamId: string) => api.get(`/teams/${teamId}/cooldown`),
   create: (d: any) => api.post('/teams', d),
+  mine: () => api.get('/teams/mine'),
+  autoMatch: () => api.post('/teams/auto-match'),
   invite: (id: string, d: any) => api.post(`/teams/${id}/invitations`, d),
   joinRequest: (id: string) => api.post(`/teams/${id}/join-requests`),
   respondInvitation: (id: string, accept: boolean) => api.post(`/invitations/${id}/respond`, { accept }),
+  myInvitations: () => api.get('/invitations'),
 };
 
 // Mentor requests
@@ -75,6 +79,7 @@ export const allocationApi = {
   list: () => api.get('/allocations'),
   cancel: (id: string) => api.post(`/allocations/${id}/cancel`),
   reject: (id: string, comments: string) => api.post(`/allocations/${id}/reject`, { comments }),
+  reassign: (id: string, newMentorId: string) => api.post('/allocations/' + id + '/reassign', { newMentorId }),
 };
 
 // Scheduler
@@ -103,8 +108,15 @@ export const adminApi = {
   settings: () => api.get('/admin/settings'),
   updateSettings: (d: any) => api.put('/admin/settings', d),
   users: () => api.get('/admin/users'),
+  updateUser: (id: string, d: any) => api.put('/admin/users/' + id, d),
+  createCycle: (d: any) => api.post('/cycles', d),
+  updateCycle: (id: string, d: any) => api.put('/cycles/' + id, d),
 };
 
 // Misc
 export const skillsApi = { list: () => api.get('/skills') };
-export const cyclesApi = { list: () => api.get('/cycles') };
+export const cyclesApi = {
+  list: () => api.get('/cycles'),
+  create: (d: any) => api.post('/cycles', d),
+  update: (id: string, d: any) => api.put('/cycles/' + id, d),
+};

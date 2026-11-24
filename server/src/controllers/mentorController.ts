@@ -4,6 +4,7 @@ import pool from '../config/database';
 import { RowDataPacket } from 'mysql2/promise';
 import { listMentorsWithCapacity, getMentorWithCapacity, getMentorByUserId, getMentorSkills } from '../repositories/mentorRepository';
 import { scoreMentor } from '../algorithms/matchingEngine';
+import { releasePermit } from '../utils/semaphore';
 
 export async function listMentors(req: Request, res: Response, next: NextFunction) {
   try {
@@ -166,6 +167,8 @@ export async function rejectAssignedTeam(req: Request, res: Response, next: Next
       `UPDATE allocations SET status='cancelled', notes=?, released_at=NOW() WHERE id=?`,
       [comments, alloc.id]
     );
+    // Release semaphore so next waiting request can be served
+    releasePermit(alloc.mentor_id);
 
     // Update request with rejection comments
     await pool.execute(

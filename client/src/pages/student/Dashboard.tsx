@@ -4,7 +4,7 @@ import { useAuth } from '../../context/AuthContext';
 import { studentApi, requestApi, allocationApi } from '../../services/api';
 import { MentorRequest, Allocation } from '../../types';
 import StatusBadge from '../../components/StatusBadge';
-import { Users, ClipboardList, Star, CheckCircle } from 'lucide-react';
+import { Users, ClipboardList, Star, CheckCircle, Heart } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
 export default function StudentDashboard() {
@@ -49,6 +49,18 @@ export default function StudentDashboard() {
             </div>
           ))}
         </div>
+
+        {/* Discover teammates promo */}
+        <Link to="/student/discover" className="card border-rose-500/30 bg-gradient-to-r from-rose-500/10 to-indigo-500/10 flex items-center justify-between hover:border-rose-500/50 transition-colors">
+          <div className="flex items-center gap-3">
+            <Heart size={22} className="text-rose-400" />
+            <div>
+              <p className="font-semibold text-white text-sm">Discover Teammates</p>
+              <p className="text-xs text-slate-400">Swipe through student profiles and invite them to your team.</p>
+            </div>
+          </div>
+          <span className="text-rose-300 text-sm">Browse →</span>
+        </Link>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
           {/* Mentor allocation card */}

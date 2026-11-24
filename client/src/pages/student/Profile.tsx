@@ -66,7 +66,7 @@ export default function StudentProfile() {
           <UserCircle size={32} className="text-indigo-400" />
           <div>
             <h1 className="text-xl font-bold text-white">{profile.first_name} {profile.last_name}</h1>
-            <p className="text-xs text-slate-400">{profile.roll_number} · {profile.department} · Sem {profile.semester}</p>
+            <p className="text-xs text-slate-400">{profile.roll_number} · {profile.department} · Section {profile.section || '—'} · Sem {profile.semester}</p>
           </div>
         </div>
 

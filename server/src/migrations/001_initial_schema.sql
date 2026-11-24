@@ -42,6 +42,7 @@ CREATE TABLE IF NOT EXISTS students (
   cgpa            DECIMAL(4,2),
   bio             TEXT,
   project_interests TEXT,
+  section           VARCHAR(10),
   created_at      DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
   updated_at      DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
@@ -234,6 +235,19 @@ CREATE TABLE IF NOT EXISTS audit_logs (
   INDEX idx_al_action  (action),
   INDEX idx_al_entity  (entity_type, entity_id),
   INDEX idx_al_created (created_at)
+);
+
+-- ─── Password Reset Tokens ────────────────────────────────────────────────────
+CREATE TABLE IF NOT EXISTS password_reset_tokens (
+  id         VARCHAR(36) PRIMARY KEY DEFAULT (UUID()),
+  user_id    VARCHAR(36) NOT NULL,
+  token_hash VARCHAR(255) NOT NULL,
+  expires_at DATETIME NOT NULL,
+  used       BOOLEAN NOT NULL DEFAULT FALSE,
+  created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+  INDEX idx_prt_user    (user_id),
+  INDEX idx_prt_expires (expires_at)
 );
 
 -- ─── System Settings ─────────────────────────────────────────────────────────

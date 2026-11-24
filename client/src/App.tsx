@@ -11,7 +11,9 @@ import StudentDashboard from './pages/student/Dashboard';
 import StudentTeams from './pages/student/Teams';
 import StudentMentors from './pages/student/Mentors';
 import StudentRequests from './pages/student/Requests';
+import StudentInvitations from './pages/student/Invitations';
 import StudentProfile from './pages/student/Profile';
+import StudentDiscover from './pages/student/Discover';
 
 // Mentor
 import MentorDashboard from './pages/mentor/Dashboard';
@@ -22,6 +24,10 @@ import AdminScheduler from './pages/admin/Scheduler';
 import AdminBankers from './pages/admin/Bankers';
 import AdminMonitor from './pages/admin/Monitor';
 import AdminAnalytics from './pages/admin/Analytics';
+import AdminAllocations from './pages/admin/Allocations';
+import AdminCycles from './pages/admin/Cycles';
+import AdminUsers from './pages/admin/Users';
+import AdminAlgoCompare from './pages/admin/AlgoCompare';
 
 function ProtectedRoute({ children, roles }: { children: React.ReactNode; roles?: string[] }) {
   const { user, loading } = useAuth();
@@ -51,9 +57,11 @@ export default function App() {
 
           {/* Student */}
           <Route path="/student" element={<ProtectedRoute roles={['student']}><StudentDashboard /></ProtectedRoute>} />
+          <Route path="/student/discover" element={<ProtectedRoute roles={['student']}><StudentDiscover /></ProtectedRoute>} />
           <Route path="/student/teams" element={<ProtectedRoute roles={['student']}><StudentTeams /></ProtectedRoute>} />
           <Route path="/student/mentors" element={<ProtectedRoute roles={['student']}><StudentMentors /></ProtectedRoute>} />
           <Route path="/student/requests" element={<ProtectedRoute roles={['student']}><StudentRequests /></ProtectedRoute>} />
+          <Route path="/student/invitations" element={<ProtectedRoute roles={['student']}><StudentInvitations /></ProtectedRoute>} />
           <Route path="/student/profile" element={<ProtectedRoute roles={['student']}><StudentProfile /></ProtectedRoute>} />
 
           {/* Mentor */}
@@ -65,6 +73,10 @@ export default function App() {
           <Route path="/admin/bankers" element={<ProtectedRoute roles={['admin']}><AdminBankers /></ProtectedRoute>} />
           <Route path="/admin/monitor" element={<ProtectedRoute roles={['admin']}><AdminMonitor /></ProtectedRoute>} />
           <Route path="/admin/analytics" element={<ProtectedRoute roles={['admin']}><AdminAnalytics /></ProtectedRoute>} />
+          <Route path="/admin/allocations" element={<ProtectedRoute roles={['admin']}><AdminAllocations /></ProtectedRoute>} />
+          <Route path="/admin/cycles" element={<ProtectedRoute roles={['admin']}><AdminCycles /></ProtectedRoute>} />
+          <Route path="/admin/users" element={<ProtectedRoute roles={['admin']}><AdminUsers /></ProtectedRoute>} />
+          <Route path="/admin/algo-compare" element={<ProtectedRoute roles={['admin']}><AdminAlgoCompare /></ProtectedRoute>} />
 
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
