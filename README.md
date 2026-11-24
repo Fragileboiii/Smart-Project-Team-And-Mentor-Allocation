@@ -10,6 +10,7 @@
 |------|---------|------------|
 | Node.js | ≥ 20 LTS | https://nodejs.org/en/download — download Windows Installer |
 | MySQL Server 8.0 | already installed | — |
+| TypeScript | ≥ 5.5 | Installed automatically via `npm install` |
 
 > After installing Node.js, **close and reopen PowerShell** so `node` and `npm` are on PATH.
 
@@ -57,6 +58,18 @@ Open **http://localhost:5173** in your browser.
 
 ---
 
+## Production Build
+
+```powershell
+# Compile TypeScript server to dist/
+npm run build --workspace=server
+
+# Start compiled server (uses dist/index.js)
+npm run start --workspace=server
+```
+
+---
+
 ## Demo Credentials
 
 | Role    | Name & Domain / Details               | Email                                 | Password     |
@@ -85,6 +98,25 @@ npm run test:server
 
 ---
 
+## Concurrency & Load Tests (Real MySQL)
+
+These tests require a separate test database. They are skipped automatically if `TEST_DB_NAME` is not set.
+
+```powershell
+# 1. Create a test database in MySQL
+#    mysql -u root -p -e "CREATE DATABASE smartalloc_test;"
+
+# 2. Run concurrency test (20 parallel requests, capacity 5)
+TEST_DB_NAME=smartalloc_test npm run test:server -- --testNamePattern="Concurrency"
+
+# 3. Run load test (1,000 sequential requests)
+TEST_DB_NAME=smartalloc_test npm run test:server -- --testNamePattern="Load"
+```
+
+> These tests create and clean up all their own data. They will NOT run against the production `smartalloc` database.
+
+---
+
 ## Features Implemented
 
 ### Core Workflows
@@ -97,6 +129,14 @@ npm run test:server
 - FCFS and Priority scheduling with aging (anti-starvation)
 - Allocation with mutex + SELECT FOR UPDATE (race-condition safe)
 - Allocation cancellation
+- Banker's Algorithm safety gate integrated into real allocation (every allocation checked for system safety before commit)
+- Stored procedure `allocate_mentor` called from production allocation path (TypeScript keeps mutex/semaphore/retry wrapper)
+- Semaphore permit released on allocation cancellation — wakes next blocked request automatically
+- Round-Robin scheduling with persistent queue cursor (position survives across scheduler ticks)
+- Password reset flow (token-based, email notification)
+- Admin cycle management (create, activate, update project cycles)
+- Admin user management (list, edit, activate/deactivate users)
+- Team invitation response UI (inbox with accept/reject for invitations and join requests)
 
 ### OS Concepts
 - In-process mutex (Map-based promise chain)
@@ -118,15 +158,8 @@ npm run test:server
 
 ## Features NOT Yet Implemented
 
-1. **Team invitation response UI** — backend done, no dedicated inbox page yet
-2. **Mentor request reassignment** — route exists (`POST /allocations/:id/reassign`), logic not wired
-3. **Admin cycle management** — no UI to create/close project cycles (manually set `is_active=1` in DB)
-4. **Real-time updates** — no WebSocket; admin monitor requires manual refresh
-5. **Email notifications** — no email sending on invite/allocation
-6. **Admin: manage individual users** — list exists, but no edit/deactivate UI
-7. **Round-Robin scheduling demo** — FCFS and Priority done, RR not implemented
-8. **Password reset** — no forgot-password flow
-9. **Mobile sidebar** — responsive layout done but sidebar toggle could be improved on small screens
+1. **Real-time updates** — no WebSocket; admin monitor requires manual refresh
+2. **Mobile sidebar** — responsive layout done but sidebar toggle could be improved on small screens
 
 ---
 
@@ -153,9 +186,11 @@ React (Vite + Tailwind)  →  Express REST API  →  MySQL 8
                                │
                     ┌──────────┴──────────┐
               AllocationEngine        Scheduler
-           (mutex + FOR UPDATE)   (FCFS / Priority)
+           (Banker's gate →          (FCFS / Priority /
+            StoredProc →              Round Robin)
+            mutex + semaphore)
                                │
-                    BankersAlgorithm (simulator)
+                    BankersAlgorithm (allocator + simulator)
 ```
 
 ## ER Diagram (Mermaid)
